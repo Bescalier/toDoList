@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lista de tareas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="shortcut icon" href="https://cdn-icons-png.flaticon.com/512/94/94774.png">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+
+    <style>
+      * {
+        font-family: "Rubik", sans-serif;
+        background-color: blanchedalmond;
+      }
+
+      h2 {
+        font-size: 41px;
+      }
+
+      li {
+        list-style: none;
+        margin-bottom: 5px;
+        text-align: center;
+        font-family: "Rubik", sans-serif;
+        font-size: 20;
+      }
+
+      a.enlace-eliminar {
+        margin-left: 10px;
+        text-decoration: none;
+        font-size: 1rem;
+      }
+      .tachado {
+        text-decoration: line-through;
+      }
+
+      #title {
+        text-align: center;
+      }
+
+      #add {
+        text-align: center;
+        font-size: 25px;
+      }
+
+      #buttonEnviar {
+        text-align: center;
+      }
+      #inputNuevaTarea {
+        text-align: center;
+        width: 300px;
+        height: 30px;
+      }
+      #btnAgregarTarea {
+		width: 300px;
+        height: 30px;
+      }
+	  #btnAgregarTarea:hover {
+		width: 300px;
+        height: 30px;
+		background-color: rgb(153, 132, 100);
+      }
+	  #by{
+		text-align: center;
+		margin-top: 60px;
+	  }
+    </style>
+  </head>
+
+  <script>
+    const CLAVE_LOCALSTORAGE = "toDoList";
+    document.addEventListener("DOMContentLoaded", () => {
+      //Arreglo principal
+      let tareas = [];
+      const $guardarTareas = document.querySelector("#guardarTareas"),
+        $btnGuardarTarea = document.querySelector("#btnAgregarTarea"),
+        $inputNuevaTarea = document.querySelector("#inputNuevaTarea");
+
+      //Escuchar clic del botón para agregar nueva tarea
+      $btnGuardarTarea.onclick = () => {
+        const tarea = $inputNuevaTarea.value;
+        //validacion para campo vacio
+        if (!tarea) {
+          alert("Ingrese una tarea!!");
+          return;
+        }
+        //validacion para valores repetidos
+        for (const [indice, tarea_guardadas] of tareas.entries()) {
+          if (tarea == tarea_guardadas.tarea) {
+            alert("La tarea ya esta guardada");
+            $inputNuevaTarea.value = "";
+            return;
+          }
+        }
+
+        tareas.push({
+          tarea: tarea,
+          terminada: false,
+        });
+        $inputNuevaTarea.value = "";
+        guardarTareasEnAlmacenamiento();
+        refrescarListaDeTareas();
+      };
+
+      const obtenerTareasDeAlmacenamiento = () => {
+        const posibleLista = JSON.parse(
+          localStorage.getItem(CLAVE_LOCALSTORAGE)
+        );
+        if (posibleLista) {
+          return posibleLista;
+        } else {
+          return [];
+        }
+      };
+
+      const guardarTareasEnAlmacenamiento = () => {
+        localStorage.setItem(CLAVE_LOCALSTORAGE, JSON.stringify(tareas));
+      };
+
+      // Definir función que refresca la lista de tareas a partir del arreglo global
+      const refrescarListaDeTareas = () => {
+        $guardarTareas.innerHTML = "";
+        for (const [indice, tarea] of tareas.entries()) {
+          // Crear el enlace para eliminar la tarea
+          const $enlaceParaEliminar = document.createElement("a");
+          $enlaceParaEliminar.classList.add("enlace-eliminar");
+          $enlaceParaEliminar.innerHTML = "&times;";
+          $enlaceParaEliminar.innerHTML =
+            "<i class='fa fa-trash-o' aria-hidden='true'></i>";
+          $enlaceParaEliminar.href = "";
+          //funcion eliminar
+          $enlaceParaEliminar.onclick = (evento) => {
+            evento.preventDefault();
+            if (!confirm("¿Eliminar tarea?")) {
+              return;
+            }
+            tareas.splice(indice, 1);
+            // Guardar los cambios
+            guardarTareasEnAlmacenamiento(tareas);
+            refrescarListaDeTareas();
+          };
+          // El input para marcar la tarea como terminada
+          const $checkbox = document.createElement("input");
+          $checkbox.type = "checkbox";
+          $checkbox.onchange = function () {
+            // No es una función flecha porque quiero acceder al elemento a través de this
+            if (this.checked) {
+              tareas[indice].terminada = true;
+            } else {
+              tareas[indice].terminada = false;
+            }
+            guardarTareasEnAlmacenamiento(tareas);
+            refrescarListaDeTareas();
+          };
+
+          // El span que llevará el contenido de la tarea
+          const $span = document.createElement("span");
+          $span.textContent = tarea.tarea;
+          // Y finalmente el elemento de la lista
+          const $li = document.createElement("li");
+          // Verificamos si la tarea está marcada para marcar los elementos
+          if (tarea.terminada) {
+            $checkbox.checked = true;
+            $span.classList.add("tachado");
+          }
+          $li.appendChild($checkbox);
+          $li.appendChild($span);
+          $li.appendChild($enlaceParaEliminar);
+          $guardarTareas.appendChild($li);
+        }
+      };
+      //Llamar a la función la primera vez
+      tareas = obtenerTareasDeAlmacenamiento();
+      refrescarListaDeTareas();
+    });
+  </script>
+
+  <body>
+    <h2 id="title">Lista por hacer</h2>
+    <p id="add"><label for="inputNuevaTarea">Añadir nueva tarea: </label></p>
+    <p id="add"><input type="text" id="inputNuevaTarea" /></p>
+    <p id="buttonEnviar"><button id="btnAgregarTarea">Guardar</button></p>
+    <ul id="guardarTareas"></ul>
+    <p id="by">
+		By: Rojas Torres Jessica Judith <br>
+			Escalier Villalva Bethel Itzel 4B
+	</p>
+  </body>
+</html>
